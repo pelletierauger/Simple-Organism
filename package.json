@@ -1,0 +1,23 @@
+{
+  "name": "simple-organism",
+  "version": "0.0.1",
+  "description": "Boids",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pelletierauger/Simple-Organism.git"
+  },
+  "author": "Guillaume Pelletier-Auger",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/pelletierauger/Simple-Organism/issues"
+  },
+  "homepage": "https://github.com/pelletierauger/Simple-Organism#readme",
+  "dependencies": {
+    "osc": "^2.2.4"
+  }
+}
