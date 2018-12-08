@@ -1,11 +1,12 @@
 let looping = true;
+let keysActive = true;
 let socket, cnvs, ctx, canvasDOM;
 let fileName = "./frames/sketch";
 let maxFrames = 20;
 let o;
 let qtree;
 let boundary;
-let vertices;
+let vertices, sizes;
 let globalDesire;
 
 function setup() {
@@ -39,20 +40,29 @@ function setup() {
         noLoop();
     }
     o = new Organism();
-    for (let i = 0; i < 250; i++) {
-        let v = 0.0001;
-        o.addCell({
-                pos: createVector(random(-1, 1), random(-1, 1)),
-                vel: createVector(random(-v, v), random(-v, v)),
-                size: 5
-            },
-            null);
-    }
+    // for (let i = 0; i < 250; i++) {
+
+    //     let x = cos(i) * i * 0.002;
+    //     let v = sin(i) * i * 0.002;
+    //     // o.addCell({
+    //     //         pos: createVector(random(-1, 1), random(-1, 1)),
+    //     //         vel: createVector(random(-v, v), random(-v, v)),
+    //     //         size: 5
+    //     //     },
+    //     //     null);
+    //     o.addCell({
+    //             pos: createVector(x, v),
+    //             vel: createVector(x, v),
+    //             size: 5
+    //         },
+    //         null);
+    // }
 }
 
 function draw() {
     globalDesire = map(sin(frameCount * 0.01), -1, 1, 0.1, 0.01);
     vertices = [];
+    sizes = [];
     // vertices.push(0, 0, 0.0);
     // vertices.push(-1, 0, 0.0);
     // vertices.push(1, 0, 0.0);
@@ -67,7 +77,27 @@ function draw() {
     o.feedQTree();
     // }
     o.show();
-    drawVertices();
+
+    // Create an empty buffer object and store color data
+    var sizes_buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, sizes_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sizes), gl.STATIC_DRAW);
+    /* ======== Associating shaders to buffer objects =======*/
+
+    // bind the color buffer
+    gl.bindBuffer(gl.ARRAY_BUFFER, sizes_buffer);
+    // get the attribute location
+    var size = gl.getAttribLocation(shaderProgram, "size");
+    // point attribute to the volor buffer object
+    gl.vertexAttribPointer(size, 1, gl.FLOAT, false, 0, 0);
+    // enable the color attribute
+    gl.enableVertexAttribArray(size);
+
+    if (vertices) {
+        drawVertices();
+    }
+
+
     // qtree.show();
     if (mouseIsPressed) {
         let mX = map(mouseX, 0, width, -1, 1);
@@ -86,28 +116,43 @@ function draw() {
     }
 }
 
+function mouseClicked() {
+    let mX = map(mouseX, 0, width, -1, 1);
+    let mY = map(mouseY, 0, height, 1, -1);
+    let v = 0.0001;
+
+    o.addCell({
+            pos: createVector(mX, mY),
+            vel: createVector(random(-v, v), random(-v, v)),
+            size: 20
+        },
+        null);
+}
+
 function keyPressed() {
-    if (keyCode === 32) {
-        if (looping) {
-            noLoop();
-            looping = false;
-        } else {
-            loop();
-            looping = true;
+    if (keysActive) {
+        if (keyCode === 32) {
+            if (looping) {
+                noLoop();
+                looping = false;
+            } else {
+                loop();
+                looping = true;
+            }
         }
-    }
-    if (key == 'o' || key == 'O') {
-        // background(180);
-        o.grow();
-        // o.show();
-    }
-    if (key == 'p' || key == 'P') {
-        frameExport();
-    }
-    if (key == 'r' || key == 'R') {
-        window.location.reload();
-    }
-    if (key == 'm' || key == 'M') {
-        redraw();
+        if (key == 'o' || key == 'O') {
+            // background(180);
+            o.grow();
+            // o.show();
+        }
+        if (key == 'p' || key == 'P') {
+            frameExport();
+        }
+        if (key == 'r' || key == 'R') {
+            window.location.reload();
+        }
+        if (key == 'm' || key == 'M') {
+            redraw();
+        }
     }
 }

@@ -59,6 +59,7 @@ let Cell = function(obj, parent) {
     this.size = obj.size;
     this.parent = parent || null;
     this.split = false;
+    this.glSize = 142;
 };
 
 Cell.prototype.feedQTree = function() {
@@ -161,9 +162,13 @@ Cell.prototype.update = function(force) {
     } else if (this.pos.y > 1 + padding) {
         this.pos.y = -padding - 1;
     }
+
     if (xSign !== Math.sign(this.vel.x) || ySign !== Math.sign(this.vel.y)) {
         // console.log("Looks like there was bump!");
         socket.emit('note', 220);
+        this.glSize = 300;
+    } else {
+        this.glSize = 142;
     }
     // this.vel.mult(this.friction);
     this.acc.set(0, 0);
@@ -194,6 +199,7 @@ Cell.prototype.mitosis = function() {
 Cell.prototype.show = function() {
     // ellipse(this.pos.x, this.pos.y, this.size);
     vertices.push(this.pos.x, this.pos.y, 0.0);
+    sizes.push(this.glSize);
     // if (this.parent) {
     //     line(this.pos.x, this.pos.y, this.parent.pos.x, this.parent.pos.y);
     // }
