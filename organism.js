@@ -27,6 +27,7 @@ Organism.prototype.grow = function() {
 
 Organism.prototype.update = function() {
     for (let i = 0; i < this.cells.length; i++) {
+        this.cells[i].align();
         this.cells[i].applyBehaviors();
         this.cells[i].update();
     }
@@ -50,15 +51,14 @@ let Cell = function(obj, parent) {
     this.vel = obj.vel;
     this.acc = createVector(0, 0);
 
-    this.maxSpeed = 10;
-    this.maxForce = 2;
-    this.desiredSeparation = 10;
-    this.friction = 0.99;
+    this.maxSpeed = 0.01;
+    this.maxForce = 0.02;
+    this.desiredSeparation = 0.1;
+    this.friction = 1.0;
 
     this.size = obj.size;
     this.parent = parent || null;
     this.split = false;
-
 };
 
 Cell.prototype.feedQTree = function() {
@@ -70,25 +70,47 @@ Cell.prototype.applyForce = function(force) {
     this.acc.add(force);
 };
 
+Cell.prototype.align = function() {
+    let perceptionRadius = 0.05;
+    // console.log("yeeah!!!");
+    let steering = createVector();
+    let total = 0;
+    let neighbors = this.gatherNeighbors(perceptionRadius);
+    if (neighbors) {
+        for (let i = 0; i < neighbors.length; i++) {
+            let n = neighbors[i].userData;
+            steering.add(n.vel);
+            total++;
+        }
+        if (total > 0) {
+            // console.log("whoaza!");
+            steering.div(total);
+            // steering.mult(0.1);
+            steering.setMag(this.maxSpeed);
+            steering.sub(this.vel);
+            steering.limit(this.maxForce);
+            this.acc.add(steering);
+        }
+    }
+};
+
 Cell.prototype.separate = function(neighbors) {
     var desiredSeparation = this.desiredSeparation;
     var sum = new p5.Vector(0, 0);
     var count = 0;
     for (var i = 0; i < neighbors.length; i++) {
         let v = neighbors[i].userData;
-        if (v.parent !== this.parent) {
-
-
-            var d = p5.Vector.dist(this.pos, v.pos);
-            if (d > 0 && d < desiredSeparation) {
-                // console.log("YALLOW!");
-                var diff = p5.Vector.sub(this.pos, v.pos);
-                diff.normalize();
-                diff.div(d);
-                sum.add(diff);
-                count++;
-            }
+        // if (v.parent !== this.parent) {
+        var d = p5.Vector.dist(this.pos, v.pos);
+        if (d > 0 && d < desiredSeparation) {
+            // console.log("YALLOW!");
+            var diff = p5.Vector.sub(this.pos, v.pos);
+            diff.normalize();
+            diff.div(d);
+            sum.add(diff);
+            count++;
         }
+        // }
     }
     if (count > 0) {
         sum.div(count);
@@ -104,30 +126,48 @@ Cell.prototype.separate = function(neighbors) {
 
 
 Cell.prototype.gatherNeighbors = function(r) {
+    // console.log("gatherin!");
     let range = new Rectangle(this.pos.x, this.pos.y, r, r);
     return qtree.query(range);
 };
 
 Cell.prototype.applyBehaviors = function() {
-    let repellers = this.gatherNeighbors(10);
+    let repellers = this.gatherNeighbors(globalDesire);
     if (repellers) {
-        for (let i = 0; i < repellers.length; i++) {
-            var separateForce = this.separate(repellers);
-            // var mult = repellers[i].mult;
-            separateForce.mult(0.1);
-            this.applyForce(separateForce);
-        }
+        // console.log(repellers);
+        // for (let i = 0; i < repellers.length; i++) {
+        var separateForce = this.separate(repellers);
+        // var mult = repellers[i].mult;
+        separateForce.mult(0.1);
+        this.applyForce(separateForce);
+        // }
     }
 };
 
 Cell.prototype.update = function(force) {
-    if (!this.split) {
-        this.vel.add(this.acc);
-        this.vel.limit(this.maxSpeed);
-        this.pos.add(this.vel);
-        this.vel.mult(this.friction);
-        this.acc.set(0, 0);
+    // if (!this.split) {
+    let xSign = Math.sign(this.vel.x);
+    let ySign = Math.sign(this.vel.y);
+    this.vel.add(this.acc);
+    this.vel.limit(this.maxSpeed);
+    this.pos.add(this.vel);
+    let padding = 0.1;
+    if (this.pos.x < -padding - 1) {
+        this.pos.x = 1 + padding;
+    } else if (this.pos.x > 1 + padding) {
+        this.pos.x = -padding - 1;
+    } else if (this.pos.y < -padding - 1) {
+        this.pos.y = 1 + padding;
+    } else if (this.pos.y > 1 + padding) {
+        this.pos.y = -padding - 1;
     }
+    if (xSign !== Math.sign(this.vel.x) || ySign !== Math.sign(this.vel.y)) {
+        // console.log("Looks like there was bump!");
+        socket.emit('note', 220);
+    }
+    // this.vel.mult(this.friction);
+    this.acc.set(0, 0);
+    // }
 };
 
 Cell.prototype.mitosis = function() {
@@ -137,8 +177,8 @@ Cell.prototype.mitosis = function() {
             let that = this;
             let s = this.size * 0.75
             for (let i = 0; i < TWO_PI; i += TWO_PI / 10) {
-                let x = cos(i) * s * 5;
-                let y = sin(i) * s * 5;
+                let x = cos(i) * random(TWO_PI) * s * 5;
+                let y = sin(i) * random(TWO_PI) * s * 5;
                 o.addCell({
                     pos: createVector(that.pos.x, that.pos.y),
                     vel: createVector(that.vel.x + x, that.vel.y + y),
@@ -152,7 +192,8 @@ Cell.prototype.mitosis = function() {
 };
 
 Cell.prototype.show = function() {
-    ellipse(this.pos.x, this.pos.y, this.size);
+    // ellipse(this.pos.x, this.pos.y, this.size);
+    vertices.push(this.pos.x, this.pos.y, 0.0);
     // if (this.parent) {
     //     line(this.pos.x, this.pos.y, this.parent.pos.x, this.parent.pos.y);
     // }

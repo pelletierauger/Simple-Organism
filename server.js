@@ -2,6 +2,59 @@ var http = require('http');
 var path = require('path');
 var fs = require('fs');
 var url = require('url');
+var osc = require("osc");
+
+var getIPAddresses = function() {
+    var os = require("os"),
+        interfaces = os.networkInterfaces(),
+        ipAddresses = [];
+
+    for (var deviceName in interfaces) {
+        var addresses = interfaces[deviceName];
+        for (var i = 0; i < addresses.length; i++) {
+            var addressInfo = addresses[i];
+            if (addressInfo.family === "IPv4" && !addressInfo.internal) {
+                ipAddresses.push(addressInfo.address);
+            }
+        }
+    }
+
+    return ipAddresses;
+};
+
+var udpPort = new osc.UDPPort({
+    // This is the port we're listening on.
+    localAddress: "127.0.0.1",
+    localPort: 57121,
+
+    // This is where sclang is listening for OSC messages.
+    remoteAddress: "127.0.0.1",
+    remotePort: 57120,
+    metadata: true
+});
+
+udpPort.on("ready", function() {
+    var ipAddresses = getIPAddresses();
+
+    console.log("Listening for OSC over UDP.");
+    ipAddresses.forEach(function(address) {
+        console.log(" Host:", address + ", Port:", udpPort.options.localPort);
+    });
+});
+
+udpPort.on("message", function(oscMessage) {
+    // console.log(oscMessage);
+    io.sockets.emit('receiveOSC', oscMessage);
+    // console.log(JSON.parse(oscMessage));
+});
+
+udpPort.on("error", function(err) {
+    console.log(err);
+});
+
+// Open the socket.
+udpPort.open();
+
 
 function handleRequest(req, res) {
     // What did we request?
@@ -91,6 +144,17 @@ io.sockets.on('connection', function(socket) {
                 console.log(data.name + ".png written successfully.");
             }
         });
+    });
+    socket.on('note', function(data) {
+        var msg = {
+            address: "/hello/from/oscjs",
+            args: [{
+                type: "f",
+                value: data
+            }]
+        };
+        // console.log("Sending message", msg.address, msg.args, "to", udpPort.options.remoteAddress + ":" + udpPort.options.remotePort);
+        udpPort.send(msg);
     });
 
     // socket.on('savePoints', function(data) {
