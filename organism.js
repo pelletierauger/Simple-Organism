@@ -26,10 +26,15 @@ Organism.prototype.grow = function() {
 };
 
 Organism.prototype.update = function() {
-    for (let i = 0; i < this.cells.length; i++) {
-        this.cells[i].align();
-        this.cells[i].applyBehaviors();
-        this.cells[i].update();
+    for (let i = this.cells.length - 1; i >= 0; i--) {
+        if (this.cells[i].deleting && this.cells[i].sizeScalar <= 0) {
+            this.cells.splice(i, 1);
+        }
+        if (this.cells[i]) {
+            this.cells[i].align();
+            this.cells[i].applyBehaviors();
+            this.cells[i].update();
+        }
     }
 };
 
@@ -43,6 +48,16 @@ Organism.prototype.move = function() {
 Organism.prototype.show = function() {
     for (let i = 0; i < this.cells.length; i++) {
         this.cells[i].show();
+    }
+};
+
+Organism.prototype.deleteCells = function(n, t) {
+    // t is the amount of frames over which we want to delete the cells.
+    t = 1 / t;
+    n = Math.min(n, this.cells.length);
+    for (let i = 0; i < n; i++) {
+        this.cells[i].deleting = true;
+        this.cells[i].deletingFactor = t;
     }
 };
 
@@ -60,6 +75,9 @@ let Cell = function(obj, parent) {
     this.parent = parent || null;
     this.split = false;
     this.glSize = 142;
+    this.sizeScalar = 1;
+    this.deleting = false;
+    this.deletingFactor = null;
 };
 
 Cell.prototype.feedQTree = function() {
@@ -147,6 +165,9 @@ Cell.prototype.applyBehaviors = function() {
 
 Cell.prototype.update = function(force) {
     // if (!this.split) {
+    if (this.deleting) {
+        this.sizeScalar -= this.deletingFactor;
+    }
     let xSign = Math.sign(this.vel.x);
     let ySign = Math.sign(this.vel.y);
     this.vel.add(this.acc);
@@ -199,7 +220,7 @@ Cell.prototype.mitosis = function() {
 Cell.prototype.show = function() {
     // ellipse(this.pos.x, this.pos.y, this.size);
     vertices.push(this.pos.x, this.pos.y, 0.0);
-    sizes.push(this.glSize);
+    sizes.push(this.glSize * this.sizeScalar);
     // if (this.parent) {
     //     line(this.pos.x, this.pos.y, this.parent.pos.x, this.parent.pos.y);
     // }
