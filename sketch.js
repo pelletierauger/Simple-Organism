@@ -59,8 +59,10 @@ function setup() {
     // }
 }
 
-function draw() {
+draw = function() {
     globalDesire = map(sin(frameCount * 0.01), -1, 1, 0.1, 0.01);
+    // globalDesire = map(sin(frameCount * 0.01), -1, 1, 0.1, 0.001);
+    // globalSpeed = map(sin(frameCount * 0.1), -1, 1, 0.5, 0.001);
     vertices = [];
     sizes = [];
     // vertices.push(0, 0, 0.0);
@@ -77,13 +79,11 @@ function draw() {
     o.feedQTree();
     // }
     o.show();
-
     // Create an empty buffer object and store color data
     var sizes_buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, sizes_buffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sizes), gl.STATIC_DRAW);
     /* ======== Associating shaders to buffer objects =======*/
-
     // bind the color buffer
     gl.bindBuffer(gl.ARRAY_BUFFER, sizes_buffer);
     // get the attribute location
@@ -92,18 +92,14 @@ function draw() {
     gl.vertexAttribPointer(size, 1, gl.FLOAT, false, 0, 0);
     // enable the color attribute
     gl.enableVertexAttribArray(size);
-
     if (vertices) {
         drawVertices();
     }
-
-
     // qtree.show();
     if (mouseIsPressed) {
         let mX = map(mouseX, 0, width, -1, 1);
         let mY = map(mouseY, 0, height, 1, -1);
         let v = 0.0001;
-
         o.addCell({
                 pos: createVector(mX, mY),
                 vel: createVector(random(-v, v), random(-v, v)),
