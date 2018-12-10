@@ -61,6 +61,10 @@ Organism.prototype.deleteCells = function(n, t) {
     }
 };
 
+Organism.prototype.length = function() {
+    logJavaScriptConsole(this.cells.length);
+};
+
 let Cell = function(obj, parent) {
     this.pos = obj.pos;
     this.vel = obj.vel;
@@ -183,7 +187,6 @@ Cell.prototype.update = function(force) {
     } else if (this.pos.y > 1 + padding) {
         this.pos.y = -padding - 1;
     }
-
     if (xSign !== Math.sign(this.vel.x) || ySign !== Math.sign(this.vel.y)) {
         // console.log("Looks like there was bump!");
         socket.emit('note', 220);
@@ -197,24 +200,24 @@ Cell.prototype.update = function(force) {
 };
 
 Cell.prototype.mitosis = function() {
-    if (!this.split) {
-        let neighbors = this.gatherNeighbors(50);
-        if (neighbors && neighbors.length < 8) {
-            let that = this;
-            let s = this.size * 0.75
-            for (let i = 0; i < TWO_PI; i += TWO_PI / 10) {
-                let x = cos(i) * random(TWO_PI) * s * 5;
-                let y = sin(i) * random(TWO_PI) * s * 5;
-                o.addCell({
-                    pos: createVector(that.pos.x, that.pos.y),
-                    vel: createVector(that.vel.x + x, that.vel.y + y),
-                    size: s
-                }, that);
-            }
-            this.split = true;
-        }
-
+    // if (!this.split) {
+    console.log("Mitos!");
+    // let neighbors = this.gatherNeighbors(50);
+    // if (neighbors && neighbors.length < 8) {
+    let that = this;
+    let s = this.size;
+    for (let i = 0; i < TWO_PI; i += TWO_PI / 10) {
+        let x = cos(i) * s;
+        let y = sin(i) * s;
+        o.addCell({
+            pos: createVector(that.pos.x + (x * 0.0025), that.pos.y + (y * 0.0025)),
+            vel: createVector(that.vel.x + x, that.vel.y + y),
+            size: s
+        }, that);
     }
+    // this.split = true;
+    // }
+    // }
 };
 
 Cell.prototype.show = function() {
@@ -225,3 +228,7 @@ Cell.prototype.show = function() {
     //     line(this.pos.x, this.pos.y, this.parent.pos.x, this.parent.pos.y);
     // }
 };
+
+function logJavaScriptConsole(msg) {
+    console.log(msg);
+}
