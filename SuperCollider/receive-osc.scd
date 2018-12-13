@@ -47,7 +47,7 @@ OSCdef.new(
         // d = Synth.new(\pinkTest, [\frequency, msg[1] * 2]);
 		d = Synth.new(\bubble, [\freq, e, \lfoFreq, f, \lon, l, \amp, 12, \out, ~reverbBus]);
         ~piano = Synth.new(\bpfbuff,
-            [\rate, e / 220,
+            [\rate, e / 261.63,
                 \lfoFreq, f,
                 \lon, l,
                 \amp, 7,
