@@ -18,6 +18,6 @@
   },
   "homepage": "https://github.com/pelletierauger/Simple-Organism#readme",
   "dependencies": {
-    "osc": "^2.2.4"
+    "osc": "^2.4.4"
   }
 }
